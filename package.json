@@ -1,0 +1,17 @@
+{
+  "name": "p5",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run dev.ts",
+    "build": "bun build --target=browser --outfile=public/sketch.js src/main.ts",
+    "check": "bunx --bun tsc --noEmit --pretty"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.23",
+    "@types/p5": "^1.7.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "p5": "^2.0.5"
+  }
+}
