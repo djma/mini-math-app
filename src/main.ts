@@ -1,6 +1,7 @@
 const INITIAL_BALL_COUNT = 10;
 const MAX_BALL_COUNT = 20;
 const MERGE_DURATION_MS = 15000;
+const BALL_SELECTION_PADDING = 10;
 
 type BoxState = {
   id: string;
@@ -16,6 +17,8 @@ const injectStyles = () => {
   style.textContent = `
     :root {
       color-scheme: light;
+      --ball-size: clamp(42px, 5.6vw, 62px);
+      --ball-selection-padding: ${BALL_SELECTION_PADDING}px;
     }
 
     * {
@@ -29,6 +32,10 @@ const injectStyles = () => {
       min-height: 100vh;
       min-width: 100vw;
       overflow: hidden;
+      touch-action: none;
+      overscroll-behavior: none;
+      -webkit-touch-callout: none;
+      user-select: none;
     }
 
     .board {
@@ -136,36 +143,56 @@ const injectStyles = () => {
     }
 
     .ball {
-      width: clamp(42px, 5.6vw, 62px);
-      height: clamp(42px, 5.6vw, 62px);
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #d8d8d8 0%, #888888 28%, #3e3e3e 60%, #0c0c0c 100%);
-      border: clamp(2px, 0.4vw, 3px) solid #2a2a2a;
-      color: #fefefe;
-      font-weight: 600;
-      font-size: clamp(16px, 2vw, 24px);
       position: absolute;
+      width: calc(var(--ball-size) + var(--ball-selection-padding) * 2);
+      height: calc(var(--ball-size) + var(--ball-selection-padding) * 2);
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: grab;
       user-select: none;
       touch-action: none;
+      transition: transform 0.2s ease;
+    }
+
+    .ball__visual {
+      position: relative;
+      width: var(--ball-size);
+      height: var(--ball-size);
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #d8d8d8 0%, #888888 28%, #3e3e3e 60%, #0c0c0c 100%);
+      border: clamp(2px, 0.4vw, 3px) solid #2a2a2a;
+      color: #fefefe;
+      font-weight: 600;
+      font-size: clamp(16px, 2vw, 24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28),
         0 6px 12px rgba(0, 0, 0, 0.2),
         inset 0 2px 4px rgba(255, 255, 255, 0.48),
         inset 0 -3px 6px rgba(0, 0, 0, 0.35);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .ball__label {
+      pointer-events: none;
+      line-height: 1;
     }
 
     .ball--dragging {
       transform: scale(1.08);
-      box-shadow: 0 0 0 clamp(6px, 1.2vw, 12px) rgba(255, 255, 255, 0.94),
-        0 28px 52px rgba(0, 0, 0, 0.38);
       cursor: grabbing;
     }
 
-    .ball--inside {
+    .ball--dragging .ball__visual {
+      box-shadow: 0 0 0 clamp(6px, 1.2vw, 12px) rgba(255, 255, 255, 0.94),
+        0 28px 52px rgba(0, 0, 0, 0.38);
+    }
+
+    .ball--inside .ball__visual {
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28),
         0 6px 12px rgba(0, 0, 0, 0.2),
         inset 0 2px 4px rgba(255, 255, 255, 0.48),
@@ -220,7 +247,48 @@ const injectStyles = () => {
   document.head.appendChild(style);
 };
 
+const disableContextMenuAndZoom = () => {
+  // Prevent browser UI gestures so dragging stays consistent across devices.
+  const preventDefault = (event: Event) => {
+    event.preventDefault();
+  };
+
+  document.addEventListener("contextmenu", preventDefault);
+
+  const handleWheel = (event: WheelEvent) => {
+    if (event.ctrlKey || event.metaKey) {
+      event.preventDefault();
+    }
+  };
+
+  document.addEventListener("wheel", handleWheel, { passive: false });
+
+  document.addEventListener(
+    "touchmove",
+    (event) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+
+  window.addEventListener("keydown", (event) => {
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      (event.key === "+" || event.key === "-" || event.key === "=" || event.key === "0")
+    ) {
+      event.preventDefault();
+    }
+  });
+
+  ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+    document.addEventListener(eventName as any, preventDefault, { passive: false });
+  });
+};
+
 injectStyles();
+disableContextMenuAndZoom();
 
 const root = document.createElement("div");
 root.className = "board";
@@ -235,10 +303,56 @@ boxesContainer.className = "boxes";
 playArea.appendChild(boxesContainer);
 
 const balls: HTMLDivElement[] = [];
+const ballLabels = new WeakMap<HTMLDivElement, HTMLSpanElement>();
 let boxes: BoxState[] = [];
 let dragOrder = 1;
 let isMerged = false;
 let mergeTimeoutId: number | null = null;
+
+const getNumericStyleValue = (
+  element: HTMLElement,
+  property: "left" | "top"
+) => {
+  const raw = element.style[property];
+  if (!raw) {
+    return 0;
+  }
+  const parsed = Number.parseFloat(raw);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const getBallVisualDiameter = (ball: HTMLDivElement) =>
+  Math.max(0, ball.offsetWidth - BALL_SELECTION_PADDING * 2);
+
+const getBallVisualRadius = (ball: HTMLDivElement) =>
+  getBallVisualDiameter(ball) / 2;
+
+const getBallCircleLeft = (ball: HTMLDivElement) =>
+  getNumericStyleValue(ball, "left") + BALL_SELECTION_PADDING;
+
+const getBallCircleTop = (ball: HTMLDivElement) =>
+  getNumericStyleValue(ball, "top") + BALL_SELECTION_PADDING;
+
+const getBallCenter = (ball: HTMLDivElement) => {
+  const radius = getBallVisualRadius(ball);
+  return {
+    x: getBallCircleLeft(ball) + radius,
+    y: getBallCircleTop(ball) + radius,
+  };
+};
+
+const getBallLabel = (ball: HTMLDivElement) => {
+  const cached = ballLabels.get(ball);
+  if (cached) {
+    return cached;
+  }
+  const found = ball.querySelector<HTMLSpanElement>(".ball__label");
+  if (found) {
+    ballLabels.set(ball, found);
+    return found;
+  }
+  return null;
+};
 
 const createBox = (id: string): BoxState => {
   const element = document.createElement("div");
@@ -289,7 +403,10 @@ const updateCounts = () => {
   }
 
   balls.forEach((ball) => {
-    ball.textContent = "";
+    const label = getBallLabel(ball);
+    if (label) {
+      label.textContent = "";
+    }
   });
 
   boxes.forEach((box, index) => {
@@ -301,7 +418,10 @@ const updateCounts = () => {
       .sort((a, b) => a.centerX - b.centerX);
 
     sortedByPosition.forEach(({ ball }, ballIndex) => {
-      ball.textContent = String(ballIndex + 1);
+      const label = getBallLabel(ball);
+      if (label) {
+        label.textContent = String(ballIndex + 1);
+      }
     });
   });
 };
@@ -331,11 +451,14 @@ const attachDrag = (ball: HTMLDivElement) => {
     const boardRect = playArea.getBoundingClientRect();
     const nextLeft = event.clientX - boardRect.left - offsetX;
     const nextTop = event.clientY - boardRect.top - offsetY;
-    const maxLeft = boardRect.width - ball.offsetWidth;
-    const maxTop = boardRect.height - ball.offsetHeight;
+    const visualSize = getBallVisualDiameter(ball);
+    const minLeft = -BALL_SELECTION_PADDING;
+    const minTop = -BALL_SELECTION_PADDING;
+    const maxLeft = boardRect.width - visualSize - BALL_SELECTION_PADDING;
+    const maxTop = boardRect.height - visualSize - BALL_SELECTION_PADDING;
 
-    ball.style.left = `${clamp(nextLeft, 0, maxLeft)}px`;
-    ball.style.top = `${clamp(nextTop, 0, maxTop)}px`;
+    ball.style.left = `${clamp(nextLeft, minLeft, maxLeft)}px`;
+    ball.style.top = `${clamp(nextTop, minTop, maxTop)}px`;
 
     updateCounts();
   };
@@ -362,8 +485,8 @@ const collectExistingBalls = (exclude: HTMLDivElement) =>
 
 const findAvailablePosition = (
   radius: number,
-  ballWidth: number,
-  ballHeight: number,
+  circleWidth: number,
+  circleHeight: number,
   existingBalls: HTMLDivElement[],
   warnOnFailure: boolean
 ) => {
@@ -394,41 +517,42 @@ const findAvailablePosition = (
   const baseMarginY = Math.min(Math.max(areaHeight * 0.05, 32), 160);
   const effectiveMarginX = Math.min(
     baseMarginX,
-    Math.max(0, (areaWidth - ballWidth) / 2)
+    Math.max(0, (areaWidth - circleWidth) / 2)
   );
   const effectiveMarginY = Math.min(
     baseMarginY,
-    Math.max(0, (areaHeight - ballHeight) / 2)
+    Math.max(0, (areaHeight - circleHeight) / 2)
   );
-  const minLeft = effectiveMarginX;
-  const maxLeft = areaWidth - effectiveMarginX - ballWidth;
-  const minTop = effectiveMarginY;
-  const maxTop = areaHeight - effectiveMarginY - ballHeight;
+  const minCircleLeft = effectiveMarginX;
+  const maxCircleLeft = areaWidth - effectiveMarginX - circleWidth;
+  const minCircleTop = effectiveMarginY;
+  const maxCircleTop = areaHeight - effectiveMarginY - circleHeight;
 
-  const horizontalRange = Math.max(0, maxLeft - minLeft);
-  const verticalRange = Math.max(0, maxTop - minTop);
+  const horizontalRange = Math.max(0, maxCircleLeft - minCircleLeft);
+  const verticalRange = Math.max(0, maxCircleTop - minCircleTop);
 
   let warningShown = false;
 
   for (let attempt = 1; attempt <= 1000; attempt += 1) {
-    const candidateLeft =
-      horizontalRange > 0 ? minLeft + Math.random() * horizontalRange : minLeft;
-    const candidateTop =
-      verticalRange > 0 ? minTop + Math.random() * verticalRange : minTop;
-    const centerX = candidateLeft + radius;
-    const centerY = candidateTop + radius;
+    const candidateCircleLeft =
+      horizontalRange > 0
+        ? minCircleLeft + Math.random() * horizontalRange
+        : minCircleLeft;
+    const candidateCircleTop =
+      verticalRange > 0
+        ? minCircleTop + Math.random() * verticalRange
+        : minCircleTop;
+    const centerX = candidateCircleLeft + radius;
+    const centerY = candidateCircleTop + radius;
     let collisionDetected = false;
-    const ballLeftAbs = playAreaRect.left + candidateLeft;
-    const ballTopAbs = playAreaRect.top + candidateTop;
-    const ballRightAbs = ballLeftAbs + ballWidth;
-    const ballBottomAbs = ballTopAbs + ballHeight;
+    const circleLeftAbs = playAreaRect.left + candidateCircleLeft;
+    const circleTopAbs = playAreaRect.top + candidateCircleTop;
+    const circleRightAbs = circleLeftAbs + circleWidth;
+    const circleBottomAbs = circleTopAbs + circleHeight;
 
     for (const other of existingBalls) {
-      const otherRadius = other.offsetWidth / 2;
-      const otherLeft = parseFloat(other.style.left || "0");
-      const otherTop = parseFloat(other.style.top || "0");
-      const otherCenterX = otherLeft + otherRadius;
-      const otherCenterY = otherTop + otherRadius;
+      const otherRadius = getBallVisualRadius(other);
+      const { x: otherCenterX, y: otherCenterY } = getBallCenter(other);
       const distance = Math.hypot(
         centerX - otherCenterX,
         centerY - otherCenterY
@@ -443,10 +567,10 @@ const findAvailablePosition = (
     if (!collisionDetected) {
       const overlapsBox = activeBoxRects.some((boxRect) => {
         const separated =
-          ballRightAbs <= boxRect.left ||
-          ballLeftAbs >= boxRect.right ||
-          ballBottomAbs <= boxRect.top ||
-          ballTopAbs >= boxRect.bottom;
+          circleRightAbs <= boxRect.left ||
+          circleLeftAbs >= boxRect.right ||
+          circleBottomAbs <= boxRect.top ||
+          circleTopAbs >= boxRect.bottom;
         return !separated;
       });
 
@@ -457,17 +581,20 @@ const findAvailablePosition = (
 
     if (!collisionDetected && gapRect) {
       const separatedFromGap =
-        ballRightAbs <= gapRect.left ||
-        ballLeftAbs >= gapRect.right ||
-        ballBottomAbs <= gapRect.top ||
-        ballTopAbs >= gapRect.bottom;
+        circleRightAbs <= gapRect.left ||
+        circleLeftAbs >= gapRect.right ||
+        circleBottomAbs <= gapRect.top ||
+        circleTopAbs >= gapRect.bottom;
       if (!separatedFromGap) {
         collisionDetected = true;
       }
     }
 
     if (!collisionDetected) {
-      return { left: candidateLeft, top: candidateTop };
+      return {
+        left: candidateCircleLeft - BALL_SELECTION_PADDING,
+        top: candidateCircleTop - BALL_SELECTION_PADDING,
+      };
     }
 
     if (warnOnFailure && attempt === 100 && !warningShown) {
@@ -480,14 +607,13 @@ const findAvailablePosition = (
 };
 
 const placeBall = (ball: HTMLDivElement, warnOnFailure = false) => {
-  const ballWidth = ball.offsetWidth;
-  const ballHeight = ball.offsetHeight;
-  const radius = ballWidth / 2;
+  const visualDiameter = getBallVisualDiameter(ball);
+  const radius = visualDiameter / 2;
   const otherBalls = collectExistingBalls(ball);
   const availablePosition = findAvailablePosition(
     radius,
-    ballWidth,
-    ballHeight,
+    visualDiameter,
+    visualDiameter,
     otherBalls,
     warnOnFailure
   );
@@ -496,10 +622,16 @@ const placeBall = (ball: HTMLDivElement, warnOnFailure = false) => {
     ball.style.left = `${availablePosition.left}px`;
     ball.style.top = `${availablePosition.top}px`;
   } else {
-    const fallbackLeft = Math.max(0, (playArea.clientWidth - ballWidth) / 2);
-    const fallbackTop = Math.max(0, (playArea.clientHeight - ballHeight) / 2);
-    ball.style.left = `${fallbackLeft}px`;
-    ball.style.top = `${fallbackTop}px`;
+    const fallbackCircleLeft = Math.max(
+      0,
+      (playArea.clientWidth - visualDiameter) / 2
+    );
+    const fallbackCircleTop = Math.max(
+      0,
+      (playArea.clientHeight - visualDiameter) / 2
+    );
+    ball.style.left = `${fallbackCircleLeft - BALL_SELECTION_PADDING}px`;
+    ball.style.top = `${fallbackCircleTop - BALL_SELECTION_PADDING}px`;
   }
 
   clampBallToBounds(ball);
@@ -512,8 +644,14 @@ const addBall = () => {
 
   const ball = document.createElement("div");
   ball.className = "ball";
-  ball.textContent = "";
   ball.style.zIndex = String(10 + balls.length);
+  const visual = document.createElement("div");
+  visual.className = "ball__visual";
+  const label = document.createElement("span");
+  label.className = "ball__label";
+  visual.appendChild(label);
+  ball.appendChild(visual);
+  ballLabels.set(ball, label);
 
   playArea.appendChild(ball);
   balls.push(ball);
@@ -542,13 +680,18 @@ const removeBall = () => {
 };
 
 const clampBallToBounds = (ball: HTMLDivElement) => {
-  const maxLeft = Math.max(0, playArea.clientWidth - ball.offsetWidth);
-  const maxTop = Math.max(0, playArea.clientHeight - ball.offsetHeight);
-  const currentLeft = parseFloat(ball.style.left || "0");
-  const currentTop = parseFloat(ball.style.top || "0");
+  const visualDiameter = getBallVisualDiameter(ball);
+  const minLeft = -BALL_SELECTION_PADDING;
+  const minTop = -BALL_SELECTION_PADDING;
+  const maxLeft =
+    playArea.clientWidth - visualDiameter - BALL_SELECTION_PADDING;
+  const maxTop =
+    playArea.clientHeight - visualDiameter - BALL_SELECTION_PADDING;
+  const currentLeft = getNumericStyleValue(ball, "left");
+  const currentTop = getNumericStyleValue(ball, "top");
 
-  ball.style.left = `${clamp(currentLeft, 0, maxLeft)}px`;
-  ball.style.top = `${clamp(currentTop, 0, maxTop)}px`;
+  ball.style.left = `${clamp(currentLeft, minLeft, maxLeft)}px`;
+  ball.style.top = `${clamp(currentTop, minTop, maxTop)}px`;
 };
 
 const controlPanel = document.createElement("div");
