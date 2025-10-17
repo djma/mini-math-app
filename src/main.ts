@@ -45,6 +45,15 @@ const injectStyles = () => {
       align-items: stretch;
       justify-content: stretch;
       padding: clamp(16px, 4vw, 40px);
+      padding-bottom: calc(clamp(16px, 4vw, 40px) + 24px);
+    }
+
+    @supports (padding-bottom: calc(16px + env(safe-area-inset-bottom))) {
+      .board {
+        padding-bottom: calc(
+          clamp(16px, 4vw, 40px) + 24px + env(safe-area-inset-bottom)
+        );
+      }
     }
 
     .play-area {
