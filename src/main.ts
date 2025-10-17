@@ -1,5 +1,4 @@
-const INITIAL_BALL_COUNT = 10;
-const MAX_BALL_COUNT = 20;
+const INITIAL_BALL_COUNT = 20;
 const MERGE_DURATION_MS = 15000;
 const BALL_SELECTION_PADDING = 10;
 
@@ -64,44 +63,6 @@ const injectStyles = () => {
       border-radius: clamp(20px, 5vw, 40px);
       box-shadow: 0 30px 70px rgba(15, 23, 42, 0.18);
       overflow: hidden;
-    }
-
-    .control-panel {
-      position: absolute;
-      top: clamp(20px, 4vw, 48px);
-      left: clamp(20px, 4vw, 48px);
-      display: flex;
-      gap: 16px;
-      background: rgba(255, 255, 255, 0.92);
-      border-radius: 999px;
-      padding: 10px 16px;
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
-      backdrop-filter: blur(10px);
-    }
-
-    .control-button {
-      border: none;
-      outline: none;
-      background: #111827;
-      color: #ffffff;
-      padding: 10px 20px;
-      border-radius: 999px;
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease,
-        background 0.15s ease;
-    }
-
-    .control-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 24px rgba(17, 24, 39, 0.22);
-    }
-
-    .control-button:active {
-      transform: translateY(0);
-      box-shadow: 0 4px 12px rgba(17, 24, 39, 0.28);
     }
 
     .boxes {
@@ -646,11 +607,7 @@ const placeBall = (ball: HTMLDivElement, warnOnFailure = false) => {
   clampBallToBounds(ball);
 };
 
-const addBall = () => {
-  if (balls.length >= MAX_BALL_COUNT) {
-    return;
-  }
-
+const createBall = () => {
   const ball = document.createElement("div");
   ball.className = "ball";
   ball.style.zIndex = String(10 + balls.length);
@@ -669,25 +626,6 @@ const addBall = () => {
   updateCounts();
 };
 
-const removeBall = () => {
-  if (balls.length === 0) {
-    return;
-  }
-
-  const outsideIndex = balls.findIndex(
-    (candidate) => !candidate.classList.contains("ball--inside")
-  );
-  const removedBall =
-    outsideIndex >= 0 ? balls.splice(outsideIndex, 1)[0] : balls.pop();
-
-  if (!removedBall) {
-    return;
-  }
-
-  removedBall.remove();
-  updateCounts();
-};
-
 const clampBallToBounds = (ball: HTMLDivElement) => {
   const visualDiameter = getBallVisualDiameter(ball);
   const minLeft = -BALL_SELECTION_PADDING;
@@ -702,24 +640,6 @@ const clampBallToBounds = (ball: HTMLDivElement) => {
   ball.style.left = `${clamp(currentLeft, minLeft, maxLeft)}px`;
   ball.style.top = `${clamp(currentTop, minTop, maxTop)}px`;
 };
-
-const controlPanel = document.createElement("div");
-controlPanel.className = "control-panel";
-
-const removeButton = document.createElement("button");
-removeButton.type = "button";
-removeButton.className = "control-button";
-removeButton.textContent = "-1";
-removeButton.addEventListener("click", () => removeBall());
-
-const addButton = document.createElement("button");
-addButton.type = "button";
-addButton.className = "control-button";
-addButton.textContent = "+1";
-addButton.addEventListener("click", () => addBall());
-
-controlPanel.append(removeButton, addButton);
-playArea.appendChild(controlPanel);
 
 const leftBox = createBox("left");
 const rightBox = createBox("right");
@@ -785,7 +705,7 @@ mergeButton.addEventListener("click", () => {
 setMergedState(false);
 
 for (let i = 0; i < INITIAL_BALL_COUNT; i += 1) {
-  addBall();
+  createBall();
 }
 
 window.addEventListener("resize", () => {
