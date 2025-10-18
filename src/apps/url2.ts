@@ -58,7 +58,7 @@ export const mountUrlTwo = () => {
         background: rgba(59, 130, 246, 0.12);
         color: #1d4ed8;
         font-size: 18px;
-        font-weight: 700;
+        font-weight: 600;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
@@ -135,30 +135,65 @@ export const mountUrlTwo = () => {
         position: absolute;
         top: 50%;
         transform: translate(-50%, -50%);
-        width: clamp(40px, 7vw, 48px);
-        height: clamp(40px, 7vw, 48px);
+        width: clamp(44px, 8vw, 52px);
+        height: clamp(44px, 8vw, 52px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 50%;
-        background: radial-gradient(circle at 35% 30%, rgba(79, 70, 229, 0.28), rgba(15, 23, 42, 0.08));
-        display: grid;
-        place-items: center;
-        color: rgba(29, 78, 216, 0.85);
-        font-size: 18px;
-        font-weight: 700;
-        text-shadow: 0 8px 16px rgba(29, 78, 216, 0.22);
+        pointer-events: none;
         opacity: 0;
         transition: opacity 0.24s ease;
-        pointer-events: none;
         z-index: 1;
       }
 
+      .slider__shadow-ring {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 3px solid rgba(59, 130, 246, 0.45);
+        background: rgba(148, 163, 184, 0.08);
+        box-shadow:
+          0 16px 32px rgba(59, 130, 246, 0.2),
+          inset 0 0 0 12px rgba(59, 130, 246, 0.05);
+      }
+
+      .slider__shadow-ring::after {
+        content: "";
+        position: absolute;
+        inset: -16px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.24), rgba(59, 130, 246, 0));
+        opacity: 0.8;
+      }
+
+      .slider__shadow-label {
+        position: absolute;
+        top: calc(100% + 12px);
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 16px;
+        font-weight: 600;
+        color: rgba(29, 78, 216, 0.9);
+        text-shadow: 0 6px 14px rgba(29, 78, 216, 0.18);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.24s ease;
+      }
+
       .slider__shadow--visible {
-        opacity: 0.45;
+        opacity: 1;
+      }
+
+      .slider__shadow--visible .slider__shadow-label {
+        opacity: 1;
       }
 
       .slider__arrow {
         position: absolute;
         top: calc(50% - clamp(44px, 8vw, 56px));
-        height: 6px;
+        height: 8px;
         border-radius: 999px;
         background: transparent;
         opacity: 0;
@@ -170,21 +205,49 @@ export const mountUrlTwo = () => {
         gap: 0;
       }
 
+      .slider__trail {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.4));
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.24s ease,
+          left 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+          width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        z-index: 0;
+      }
+
+      .slider__trail--visible {
+        opacity: 1;
+      }
+
       .slider__arrow-body {
         flex: 1;
         height: 100%;
         border-radius: 999px;
+        box-shadow: 0 10px 20px rgba(29, 78, 216, 0.25);
       }
 
       .slider__arrow-label {
         position: absolute;
-        top: 50%;
+        top: -12px;
         left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 16px;
-        font-weight: 700;
-        color: #1d4ed8;
-        text-shadow: 0 4px 10px rgba(29, 78, 216, 0.25);
+        transform: translate(-50%, -100%);
+        padding: 6px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(191, 219, 254, 0.85);
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+        letter-spacing: 0.01em;
+        box-shadow:
+          0 12px 24px rgba(30, 64, 175, 0.25),
+          inset 0 1px 0 rgba(255, 255, 255, 0.85);
         opacity: 0;
         transition: opacity 0.24s ease;
         pointer-events: none;
@@ -260,7 +323,7 @@ export const mountUrlTwo = () => {
         border-radius: 50%;
         color: #ffffff;
         font-size: 20px;
-        font-weight: 700;
+        font-weight: 600;
         pointer-events: none;
       }
     `;
@@ -296,8 +359,18 @@ export const mountUrlTwo = () => {
   const track = document.createElement("div");
   track.className = "slider__track";
 
+  const trail = document.createElement("div");
+  trail.className = "slider__trail";
+  track.appendChild(trail);
+
   const shadow = document.createElement("div");
   shadow.className = "slider__shadow";
+  const shadowRing = document.createElement("div");
+  shadowRing.className = "slider__shadow-ring";
+  const shadowLabel = document.createElement("span");
+  shadowLabel.className = "slider__shadow-label";
+  shadow.appendChild(shadowRing);
+  shadow.appendChild(shadowLabel);
   track.appendChild(shadow);
 
   const arrow = document.createElement("div");
@@ -429,6 +502,28 @@ export const mountUrlTwo = () => {
     thumb.style.left = `${ratio * 100}%`;
   };
 
+  const hideTrail = () => {
+    trail.classList.remove("slider__trail--visible");
+    trail.style.left = "50%";
+    trail.style.width = "0%";
+  };
+
+  const showTrailBetween = (startRatio: number, endRatio: number) => {
+    if (startRatio === endRatio) {
+      hideTrail();
+      return;
+    }
+    const minRatio = Math.min(startRatio, endRatio);
+    const maxRatio = Math.max(startRatio, endRatio);
+    trail.style.left = `${minRatio * 100}%`;
+    trail.style.width = `${(maxRatio - minRatio) * 100}%`;
+    const isPositive = endRatio > startRatio;
+    trail.style.background = isPositive
+      ? "linear-gradient(90deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.4))"
+      : "linear-gradient(270deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.4))";
+    trail.classList.add("slider__trail--visible");
+  };
+
   const hideArrow = () => {
     arrow.classList.remove(
       "slider__arrow--visible",
@@ -439,16 +534,17 @@ export const mountUrlTwo = () => {
     arrow.style.right = "50%";
     arrowBody.style.background = "transparent";
     arrowLabel.textContent = "";
+    hideTrail();
   };
 
   const hideShadow = () => {
     shadow.classList.remove("slider__shadow--visible");
-    shadow.textContent = "";
+    shadowLabel.textContent = "";
   };
 
   const showShadowAt = (targetRatio: number, value: number) => {
     shadow.style.left = `${targetRatio * 100}%`;
-    shadow.textContent = String(value);
+    shadowLabel.textContent = String(value);
     shadow.classList.add("slider__shadow--visible");
   };
 
@@ -461,6 +557,7 @@ export const mountUrlTwo = () => {
       hideArrow();
       return;
     }
+    showTrailBetween(startRatio, endRatio);
     arrow.style.left = `${Math.min(startRatio, endRatio) * 100}%`;
     arrow.style.right = `${(1 - Math.max(startRatio, endRatio)) * 100}%`;
     const isPositive = endRatio > startRatio;
