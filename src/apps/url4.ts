@@ -34,6 +34,8 @@ const ensureStyles = () => {
   style.textContent = `
     :root {
       color-scheme: light;
+      --clock-size: 66.6667vmin;
+      --clock-scale: calc(var(--clock-size) / 420px);
     }
 
     * {
@@ -47,31 +49,31 @@ const ensureStyles = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: clamp(24px, 5vw, 64px);
+      padding: calc(var(--clock-scale) * 36px);
       background: radial-gradient(circle at top, #fdf2f8 0%, #e0f2fe 60%, #bfdbfe 100%);
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       color: #0f172a;
     }
 
     .url4__root {
-      width: min(520px, 100%);
+      width: min(calc(var(--clock-scale) * 520px), 100%);
     }
 
     .url4__card {
       background: rgba(255, 255, 255, 0.96);
-      border-radius: clamp(26px, 5vw, 36px);
-      padding: clamp(28px, 6vw, 44px);
+      border-radius: calc(var(--clock-scale) * 32px);
+      padding: calc(var(--clock-scale) * 40px);
       box-shadow:
-        0 30px 60px rgba(15, 23, 42, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        0 calc(var(--clock-scale) * 30px) calc(var(--clock-scale) * 60px) rgba(15, 23, 42, 0.18),
+        inset 0 calc(var(--clock-scale) * 1px) 0 rgba(255, 255, 255, 0.7);
       display: grid;
-      gap: clamp(24px, 5vw, 36px);
+      gap: calc(var(--clock-scale) * 32px);
       justify-items: center;
     }
 
     .url4__title {
       margin: 0;
-      font-size: clamp(20px, 3.6vw, 28px);
+      font-size: calc(var(--clock-scale) * 24px);
       font-weight: 700;
       text-align: center;
       letter-spacing: 0.02em;
@@ -80,15 +82,15 @@ const ensureStyles = () => {
 
     .url4__clock {
       position: relative;
-      width: min(420px, calc(100vw - 96px));
+      width: var(--clock-size);
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f8fafc 55%, #e2e8f0 100%);
-      border: clamp(10px, 2.6vw, 14px) solid rgba(15, 23, 42, 0.05);
+      border: calc(var(--clock-scale) * 12px) solid rgba(15, 23, 42, 0.05);
       box-shadow:
-        0 20px 50px rgba(15, 23, 42, 0.12),
-        inset 0 6px 10px rgba(255, 255, 255, 0.8),
-        inset 0 -6px 12px rgba(15, 23, 42, 0.08);
+        0 calc(var(--clock-scale) * 20px) calc(var(--clock-scale) * 50px) rgba(15, 23, 42, 0.12),
+        inset 0 calc(var(--clock-scale) * 6px) calc(var(--clock-scale) * 10px) rgba(255, 255, 255, 0.8),
+        inset 0 calc(var(--clock-scale) * -6px) calc(var(--clock-scale) * 12px) rgba(15, 23, 42, 0.08);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -112,19 +114,19 @@ const ensureStyles = () => {
 
     .url4__marker-line {
       position: absolute;
-      top: clamp(14px, 4.4vw, 22px);
+      top: calc(var(--clock-scale) * 18px);
       left: 50%;
-      width: clamp(2px, 0.4vw, 3px);
-      height: clamp(12px, 2.6vw, 18px);
+      width: calc(var(--clock-scale) * 3px);
+      height: calc(var(--clock-scale) * 18px);
       border-radius: 999px;
       background: rgba(15, 23, 42, 0.35);
       transform: translateX(-50%);
     }
 
     .url4__marker-line--major {
-      top: clamp(10px, 3.6vw, 18px);
-      width: clamp(3px, 0.5vw, 4px);
-      height: clamp(20px, 4vw, 28px);
+      top: calc(var(--clock-scale) * 16px);
+      width: calc(var(--clock-scale) * 4px);
+      height: calc(var(--clock-scale) * 28px);
       background: rgba(15, 23, 42, 0.55);
     }
 
@@ -133,10 +135,10 @@ const ensureStyles = () => {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: clamp(16px, 3vw, 22px);
+      font-size: calc(var(--clock-scale) * 22px);
       font-weight: 600;
       color: rgba(15, 23, 42, 0.85);
-      text-shadow: 0 6px 12px rgba(15, 23, 42, 0.06);
+      text-shadow: 0 calc(var(--clock-scale) * 6px) calc(var(--clock-scale) * 12px) rgba(15, 23, 42, 0.06);
       pointer-events: none;
     }
 
@@ -159,59 +161,59 @@ const ensureStyles = () => {
       left: 50%;
       bottom: 0;
       transform: translate(-50%, 60%);
-      width: clamp(10px, 2vw, 14px);
-      height: clamp(10px, 2vw, 14px);
+      width: calc(var(--clock-scale) * 14px);
+      height: calc(var(--clock-scale) * 14px);
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.78);
-      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.18);
+      box-shadow: inset 0 calc(var(--clock-scale) * 1px) calc(var(--clock-scale) * 2px) rgba(15, 23, 42, 0.18);
     }
 
     .url4__hand--hour {
-      width: clamp(12px, 2.4vw, 16px);
+      width: calc(var(--clock-scale) * 16px);
       height: 28.8%;
       background: linear-gradient(180deg, #f87171 0%, #b91c1c 100%);
-      box-shadow: 0 10px 18px rgba(239, 68, 68, 0.28);
+      box-shadow: 0 calc(var(--clock-scale) * 10px) calc(var(--clock-scale) * 18px) rgba(239, 68, 68, 0.28);
     }
 
     .url4__hand--minute {
-      width: clamp(8px, 1.8vw, 12px);
+      width: calc(var(--clock-scale) * 12px);
       height: 46%;
       background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
-      box-shadow: 0 12px 20px rgba(59, 130, 246, 0.28);
+      box-shadow: 0 calc(var(--clock-scale) * 12px) calc(var(--clock-scale) * 20px) rgba(59, 130, 246, 0.28);
     }
 
     .url4__hand--dragging {
       cursor: grabbing;
-      box-shadow: 0 14px 24px rgba(15, 23, 42, 0.2);
+      box-shadow: 0 calc(var(--clock-scale) * 14px) calc(var(--clock-scale) * 24px) rgba(15, 23, 42, 0.2);
     }
 
     .url4__pivot {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: clamp(18px, 3.2vw, 24px);
-      height: clamp(18px, 3.2vw, 24px);
+      width: calc(var(--clock-scale) * 24px);
+      height: calc(var(--clock-scale) * 24px);
       background: radial-gradient(circle, #ffffff 0%, #cbd5f5 100%);
       border-radius: 50%;
       transform: translate(-50%, -50%);
       box-shadow:
-        0 6px 16px rgba(15, 23, 42, 0.2),
-        inset 0 2px 4px rgba(255, 255, 255, 0.9);
+        0 calc(var(--clock-scale) * 6px) calc(var(--clock-scale) * 16px) rgba(15, 23, 42, 0.2),
+        inset 0 calc(var(--clock-scale) * 2px) calc(var(--clock-scale) * 4px) rgba(255, 255, 255, 0.9);
       pointer-events: none;
     }
 
     .url4__digital {
-      font-size: clamp(28px, 7vw, 44px);
+      font-size: calc(var(--clock-scale) * 44px);
       font-weight: 700;
       letter-spacing: 0.08em;
       color: #1f2937;
-      text-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+      text-shadow: 0 calc(var(--clock-scale) * 10px) calc(var(--clock-scale) * 20px) rgba(15, 23, 42, 0.15);
     }
 
     .url4__hint {
       margin: 0;
       text-align: center;
-      font-size: clamp(14px, 3.2vw, 17px);
+      font-size: calc(var(--clock-scale) * 17px);
       line-height: 1.4;
       color: rgba(15, 23, 42, 0.7);
       max-width: 32ch;
