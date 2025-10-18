@@ -1,3 +1,5 @@
+import { disableContextMenuAndZoom } from "../utils/interactionGuards";
+
 const MIN_VALUE = 1;
 const MAX_VALUE = 5;
 const DEFAULT_X = 3;
@@ -508,6 +510,7 @@ const createSlider = (
 };
 
 export const mountUrlThree = () => {
+  disableContextMenuAndZoom();
   document.body.innerHTML = "";
   ensureStyles();
 

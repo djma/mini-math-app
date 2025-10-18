@@ -1,3 +1,5 @@
+import { disableContextMenuAndZoom } from "../utils/interactionGuards";
+
 const NOTCH_COUNT = 6;
 const MODIFIERS = [-2, -1, 1, 2];
 
@@ -5,6 +7,7 @@ const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
 export const mountUrlTwo = () => {
+  disableContextMenuAndZoom();
   document.body.innerHTML = "";
 
   const existingStyles = document.getElementById("url2-slider-styles");

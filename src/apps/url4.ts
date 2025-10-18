@@ -1,3 +1,5 @@
+import { disableContextMenuAndZoom } from "../utils/interactionGuards";
+
 const TAU = Math.PI * 2;
 const TOTAL_MINUTES = 12 * 60;
 const MINUTES_PER_HOUR = 60;
@@ -10,7 +12,7 @@ const normalizeTime = (value: number) => {
 const formatDigitalTime = (minutes: number) => {
   const normalized = normalizeTime(minutes);
   let hours = Math.floor(normalized / MINUTES_PER_HOUR);
-  let mins = Math.round(normalized % MINUTES_PER_HOUR);
+  let mins = Math.floor(normalized % MINUTES_PER_HOUR);
 
   if (mins === MINUTES_PER_HOUR) {
     mins = 0;
@@ -142,7 +144,7 @@ const ensureStyles = () => {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform-origin: center calc(100% - clamp(10px, 2vw, 14px));
+      transform-origin: 50% 100%;
       transform: translate(-50%, -100%) rotate(var(--angle, 0deg));
       border-radius: 999px;
       cursor: grab;
@@ -155,27 +157,27 @@ const ensureStyles = () => {
       content: "";
       position: absolute;
       left: 50%;
-      bottom: clamp(10px, 2vw, 14px);
-      transform: translateX(-50%);
-      width: clamp(6px, 1.2vw, 9px);
-      height: clamp(6px, 1.2vw, 9px);
+      bottom: 0;
+      transform: translate(-50%, 60%);
+      width: clamp(10px, 2vw, 14px);
+      height: clamp(10px, 2vw, 14px);
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.75);
+      background: rgba(255, 255, 255, 0.78);
       box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.18);
     }
 
     .url4__hand--hour {
-      width: clamp(14px, 2.6vw, 18px);
-      height: 34%;
-      background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
-      box-shadow: 0 10px 16px rgba(30, 64, 175, 0.25);
+      width: clamp(12px, 2.4vw, 16px);
+      height: 28.8%;
+      background: linear-gradient(180deg, #f87171 0%, #b91c1c 100%);
+      box-shadow: 0 10px 18px rgba(239, 68, 68, 0.28);
     }
 
     .url4__hand--minute {
-      width: clamp(8px, 1.6vw, 12px);
-      height: 44%;
-      background: linear-gradient(180deg, #f97316 0%, #c2410c 100%);
-      box-shadow: 0 12px 20px rgba(249, 115, 22, 0.25);
+      width: clamp(8px, 1.8vw, 12px);
+      height: 46%;
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      box-shadow: 0 12px 20px rgba(59, 130, 246, 0.28);
     }
 
     .url4__hand--dragging {
@@ -219,6 +221,7 @@ const ensureStyles = () => {
 };
 
 export const mountUrlFour = () => {
+  disableContextMenuAndZoom();
   document.body.innerHTML = "";
   ensureStyles();
 
@@ -227,10 +230,6 @@ export const mountUrlFour = () => {
 
   const card = document.createElement("div");
   card.className = "url4__card";
-
-  const title = document.createElement("h1");
-  title.className = "url4__title";
-  title.textContent = "Follow the Hands";
 
   const clock = document.createElement("div");
   clock.className = "url4__clock";
@@ -253,7 +252,7 @@ export const mountUrlFour = () => {
     face.appendChild(marker);
   }
 
-  const numberRadius = 38;
+  const numberRadius = 34;
   for (let i = 1; i <= 12; i += 1) {
     const number = document.createElement("div");
     number.className = "url4__number";
@@ -286,14 +285,8 @@ export const mountUrlFour = () => {
   const digital = document.createElement("div");
   digital.className = "url4__digital";
 
-  const hint = document.createElement("p");
-  hint.className = "url4__hint";
-  hint.textContent = "Drag the minute or hour hand. The minute hand always takes the shortest path and the hour hand keeps pace.";
-
-  card.appendChild(title);
   card.appendChild(clock);
   card.appendChild(digital);
-  card.appendChild(hint);
   root.appendChild(card);
   document.body.appendChild(root);
 
@@ -308,7 +301,7 @@ export const mountUrlFour = () => {
   };
 
   const normalizeAngleDelta = (delta: number) => {
-    const wrapped = ((delta + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    const wrapped = ((((delta + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
     return Number.isNaN(wrapped) ? 0 : wrapped;
   };
 
@@ -319,7 +312,8 @@ export const mountUrlFour = () => {
 
   const updateClock = () => {
     timeMinutes = normalizeTime(timeMinutes);
-    const minuteAngle = ((timeMinutes % MINUTES_PER_HOUR) / MINUTES_PER_HOUR) * 360;
+    const minuteAngle =
+      ((timeMinutes % MINUTES_PER_HOUR) / MINUTES_PER_HOUR) * 360;
     const hourAngle = (timeMinutes / TOTAL_MINUTES) * 360;
 
     minuteHand.style.setProperty("--angle", `${minuteAngle}deg`);
@@ -369,7 +363,8 @@ export const mountUrlFour = () => {
   hourHand.addEventListener("pointerup", endHourDrag);
   hourHand.addEventListener("pointercancel", endHourDrag);
 
-  let minuteDragState: { pointerId: number; previousAngle: number } | null = null;
+  let minuteDragState: { pointerId: number; previousAngle: number } | null =
+    null;
 
   minuteHand.addEventListener("pointerdown", (event) => {
     event.preventDefault();
