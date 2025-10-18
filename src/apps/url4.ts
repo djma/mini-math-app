@@ -155,6 +155,18 @@ const ensureStyles = () => {
       transition: box-shadow 0.2s ease;
     }
 
+    .url4__hand::before {
+      content: "";
+      position: absolute;
+      top: calc(var(--clock-scale) * -16px);
+      left: 50%;
+      width: calc(var(--clock-scale) * 32px);
+      height: calc(100% + var(--clock-scale) * 35px);
+      transform: translateX(-50%);
+      background: transparent;
+      pointer-events: auto;
+    }
+
     .url4__hand::after {
       content: "";
       position: absolute;
