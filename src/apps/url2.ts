@@ -51,15 +51,18 @@ export const mountUrlTwo = () => {
       }
 
       .modifiers__button {
-        min-width: 72px;
-        padding: 10px 18px;
+        min-width: 96px;
+        padding: 12px 18px;
         border-radius: 999px;
         border: 2px solid transparent;
         background: rgba(59, 130, 246, 0.12);
         color: #1d4ed8;
-        font-size: 16px;
-        font-weight: 600;
+        font-size: 18px;
+        font-weight: 700;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         transition:
           transform 0.16s ease,
           box-shadow 0.16s ease,
@@ -77,6 +80,14 @@ export const mountUrlTwo = () => {
         background: linear-gradient(135deg, #6366f1, #2563eb);
         color: #ffffff;
         box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.25);
+      }
+
+      .modifiers__button--active {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #ffffff;
+        box-shadow:
+          0 12px 24px rgba(29, 78, 216, 0.28),
+          inset 0 2px 4px rgba(255, 255, 255, 0.25);
       }
 
       .slider-area {
@@ -128,6 +139,12 @@ export const mountUrlTwo = () => {
         height: clamp(40px, 7vw, 48px);
         border-radius: 50%;
         background: radial-gradient(circle at 35% 30%, rgba(79, 70, 229, 0.28), rgba(15, 23, 42, 0.08));
+        display: grid;
+        place-items: center;
+        color: rgba(29, 78, 216, 0.85);
+        font-size: 18px;
+        font-weight: 700;
+        text-shadow: 0 8px 16px rgba(29, 78, 216, 0.22);
         opacity: 0;
         transition: opacity 0.24s ease;
         pointer-events: none;
@@ -143,37 +160,69 @@ export const mountUrlTwo = () => {
         top: calc(50% - clamp(44px, 8vw, 56px));
         height: 6px;
         border-radius: 999px;
-        background: linear-gradient(90deg, rgba(37, 99, 235, 0.2), rgba(29, 78, 216, 0.75));
+        background: transparent;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.2s ease;
         z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 0;
+      }
+
+      .slider__arrow-body {
+        flex: 1;
+        height: 100%;
+        border-radius: 999px;
+      }
+
+      .slider__arrow-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 16px;
+        font-weight: 700;
+        color: #1d4ed8;
+        text-shadow: 0 4px 10px rgba(29, 78, 216, 0.25);
+        opacity: 0;
+        transition: opacity 0.24s ease;
+        pointer-events: none;
+      }
+
+      .slider__arrow--visible .slider__arrow-label {
+        opacity: 1;
       }
 
       .slider__arrow--visible {
         opacity: 1;
       }
 
-      .slider__arrow::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        border: 9px solid transparent;
+      .slider__arrow-tip {
+        width: 0;
+        height: 0;
+        border-top: 9px solid transparent;
+        border-bottom: 9px solid transparent;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
       }
 
-      .slider__arrow--positive::after {
-        right: -2px;
+      .slider__arrow--positive {
+        flex-direction: row;
+      }
+
+      .slider__arrow--positive .slider__arrow-tip {
         border-left-color: rgba(29, 78, 216, 0.75);
-      }
-
-      .slider__arrow--negative::after {
-        left: -2px;
-        border-right-color: rgba(29, 78, 216, 0.75);
+        margin-left: -2px;
       }
 
       .slider__arrow--negative {
-        background: linear-gradient(90deg, rgba(29, 78, 216, 0.75), rgba(37, 99, 235, 0.2));
+        flex-direction: row-reverse;
+      }
+
+      .slider__arrow--negative .slider__arrow-tip {
+        border-right-color: rgba(29, 78, 216, 0.75);
+        margin-right: -2px;
       }
 
       .slider__thumb {
@@ -205,23 +254,14 @@ export const mountUrlTwo = () => {
 
       .slider__label {
         position: absolute;
-        top: -32px;
-        left: 50%;
-        transform: translate(-50%, 0);
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: rgba(30, 64, 175, 0.94);
-        color: white;
-        font-size: 14px;
-        font-weight: 600;
-        opacity: 0;
-        transition: opacity 0.18s ease, transform 0.18s ease;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 700;
         pointer-events: none;
-      }
-
-      .slider__label--visible {
-        opacity: 1;
-        transform: translate(-50%, -4px);
       }
     `;
     document.head.appendChild(style);
@@ -238,11 +278,6 @@ export const mountUrlTwo = () => {
 
   const modifiers = document.createElement("div");
   modifiers.className = "modifiers";
-
-  const modifiersTitle = document.createElement("span");
-  modifiersTitle.className = "modifiers__title";
-  modifiersTitle.textContent = "Modifier";
-  modifiers.appendChild(modifiersTitle);
 
   const modifiersList = document.createElement("div");
   modifiersList.className = "modifiers__list";
@@ -267,6 +302,15 @@ export const mountUrlTwo = () => {
 
   const arrow = document.createElement("div");
   arrow.className = "slider__arrow";
+  const arrowBody = document.createElement("div");
+  arrowBody.className = "slider__arrow-body";
+  const arrowTip = document.createElement("span");
+  arrowTip.className = "slider__arrow-tip";
+  const arrowLabel = document.createElement("span");
+  arrowLabel.className = "slider__arrow-label";
+  arrow.appendChild(arrowBody);
+  arrow.appendChild(arrowTip);
+  arrow.appendChild(arrowLabel);
   track.appendChild(arrow);
 
   const notchRatios = Array.from({ length: NOTCH_COUNT }, (_, index) =>
@@ -318,12 +362,19 @@ export const mountUrlTwo = () => {
   readoutValue.textContent = "0";
   readout.appendChild(readoutValue);
 
-  const modifierButtons: HTMLButtonElement[] = [];
+  type ModifierButton = {
+    button: HTMLButtonElement;
+    delta: number;
+  };
+
+  const modifierButtons: ModifierButton[] = [];
 
   let dragging = false;
   let ratio = 0;
   let trackRect: DOMRect | null = null;
   let currentIndex = 0;
+  let baseIndex = 0;
+  let activeModifier: number | null = null;
   let animating = false;
   let pendingIndex: number | null = null;
 
@@ -331,13 +382,42 @@ export const mountUrlTwo = () => {
     thumb.setAttribute("aria-valuenow", String(value));
   };
 
-  const toggleLabel = (visible: boolean, value: number) => {
-    label.textContent = String(value);
-    label.classList.toggle("slider__label--visible", visible);
+  const isIndexAvailable = (index: number) =>
+    index >= 0 && index <= NOTCH_COUNT - 1;
+
+  const canApplyModifier = (origin: number, delta: number) =>
+    isIndexAvailable(origin + delta);
+
+  const formatDelta = (value: number) =>
+    value > 0 ? `+${value}` : String(value);
+
+  const formatExpression = (origin: number, delta: number) => {
+    const operator = delta >= 0 ? "+" : "-";
+    const absoluteDelta = Math.abs(delta);
+    return `${origin} ${operator} ${absoluteDelta}`;
   };
 
-  const updateReadout = (value: number) => {
-    readoutValue.textContent = String(value);
+  const setLabelValue = (value: number) => {
+    label.textContent = String(value);
+  };
+
+  const updateReadout = () => {
+    if (activeModifier === null) {
+      readoutValue.textContent = String(baseIndex);
+      return;
+    }
+    readoutValue.textContent = formatExpression(baseIndex, activeModifier);
+  };
+
+  const updateModifierButtons = () => {
+    modifierButtons.forEach(({ button, delta }) => {
+      const isActive = activeModifier === delta;
+      const isAvailable = canApplyModifier(baseIndex, delta);
+      button.disabled = !isActive && !isAvailable;
+      button.classList.toggle("modifiers__button--active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+      button.textContent = formatDelta(delta);
+    });
   };
 
   const requestMeasurements = () => {
@@ -357,30 +437,43 @@ export const mountUrlTwo = () => {
     );
     arrow.style.left = "50%";
     arrow.style.right = "50%";
+    arrowBody.style.background = "transparent";
+    arrowLabel.textContent = "";
   };
 
   const hideShadow = () => {
     shadow.classList.remove("slider__shadow--visible");
+    shadow.textContent = "";
   };
 
-  const showShadowAt = (targetRatio: number) => {
+  const showShadowAt = (targetRatio: number, value: number) => {
     shadow.style.left = `${targetRatio * 100}%`;
+    shadow.textContent = String(value);
     shadow.classList.add("slider__shadow--visible");
   };
 
-  const showArrowBetween = (startRatio: number, endRatio: number) => {
+  const showArrowBetween = (
+    startRatio: number,
+    endRatio: number,
+    deltaValue: number
+  ) => {
     if (startRatio === endRatio) {
       hideArrow();
       return;
     }
     arrow.style.left = `${Math.min(startRatio, endRatio) * 100}%`;
     arrow.style.right = `${(1 - Math.max(startRatio, endRatio)) * 100}%`;
+    const isPositive = endRatio > startRatio;
+    arrowBody.style.background = isPositive
+        ? "linear-gradient(90deg, rgba(37, 99, 235, 0.2), rgba(29, 78, 216, 0.75))"
+        : "linear-gradient(90deg, rgba(29, 78, 216, 0.75), rgba(37, 99, 235, 0.2))";
     arrow.classList.add("slider__arrow--visible");
-    arrow.classList.toggle("slider__arrow--positive", endRatio > startRatio);
-    arrow.classList.toggle("slider__arrow--negative", endRatio < startRatio);
+    arrow.classList.remove("slider__arrow--positive", "slider__arrow--negative");
+    arrow.classList.add(isPositive ? "slider__arrow--positive" : "slider__arrow--negative");
+    arrowLabel.textContent = formatDelta(deltaValue);
   };
 
-  const snapToNearest = (showLabel = true) => {
+  const snapToNearest = () => {
     const closestIndex = notchRatios.reduce(
       (nearest, notchRatio, index) => {
         const distance = Math.abs(ratio - notchRatio);
@@ -396,8 +489,12 @@ export const mountUrlTwo = () => {
     currentIndex = closestIndex;
     pendingIndex = null;
     updateAriaValue(closestIndex);
-    toggleLabel(showLabel, closestIndex);
-    updateReadout(closestIndex);
+    setLabelValue(closestIndex);
+    if (activeModifier === null) {
+      baseIndex = closestIndex;
+    }
+    updateReadout();
+    updateModifierButtons();
     hideArrow();
     hideShadow();
     animating = false;
@@ -410,36 +507,115 @@ export const mountUrlTwo = () => {
     animating = false;
     pendingIndex = null;
     updateAriaValue(targetIndex);
-    toggleLabel(true, targetIndex);
-    updateReadout(targetIndex);
+    setLabelValue(targetIndex);
+    if (activeModifier === null) {
+      baseIndex = targetIndex;
+    }
+    updateReadout();
+    updateModifierButtons();
   };
 
-  const applyModifier = (delta: number) => {
+  const animateThumbToIndex = (
+    targetIndex: number,
+    arrowOriginIndex: number | null,
+    arrowDelta: number | null = null
+  ) => {
     if (animating) {
       return;
     }
 
-    const startIndex = currentIndex;
-    const targetIndex = clamp(startIndex + delta, 0, NOTCH_COUNT - 1);
-    if (targetIndex === startIndex) {
-      toggleLabel(true, currentIndex);
+    const clampedTarget = clamp(targetIndex, 0, NOTCH_COUNT - 1);
+
+    if (clampedTarget === currentIndex) {
+      setLabelValue(currentIndex);
+      if (
+        arrowOriginIndex === null ||
+        arrowDelta === null ||
+        !isIndexAvailable(arrowOriginIndex)
+      ) {
+        hideArrow();
+        hideShadow();
+      } else {
+        const originRatio = notchRatios[arrowOriginIndex];
+        const targetRatio = notchRatios[clampedTarget];
+        showShadowAt(originRatio, arrowOriginIndex);
+        showArrowBetween(originRatio, targetRatio, arrowDelta);
+      }
       return;
     }
 
-    const startRatio = notchRatios[startIndex];
-    const targetRatio = notchRatios[targetIndex];
+    const targetRatio = notchRatios[clampedTarget];
 
-    showShadowAt(startRatio);
-    showArrowBetween(startRatio, targetRatio);
+    if (
+      arrowOriginIndex !== null &&
+      arrowDelta !== null &&
+      isIndexAvailable(arrowOriginIndex)
+    ) {
+      const originRatio = notchRatios[arrowOriginIndex];
+      showShadowAt(originRatio, arrowOriginIndex);
+      showArrowBetween(originRatio, targetRatio, arrowDelta);
+    } else {
+      hideArrow();
+      hideShadow();
+    }
 
     animating = true;
-    pendingIndex = targetIndex;
+    pendingIndex = clampedTarget;
     thumb.classList.remove("slider__thumb--no-transition");
-    toggleLabel(false, targetIndex);
+    setLabelValue(clampedTarget);
 
     requestAnimationFrame(() => {
       setThumbByRatio(targetRatio);
     });
+  };
+
+  const activateModifier = (delta: number) => {
+    if (!canApplyModifier(baseIndex, delta)) {
+      return;
+    }
+    activeModifier = delta;
+    updateModifierButtons();
+    updateReadout();
+    const targetIndex = baseIndex + delta;
+    animateThumbToIndex(targetIndex, baseIndex, delta);
+  };
+
+  const deactivateModifier = () => {
+    if (activeModifier === null) {
+      return;
+    }
+    const originIndex = currentIndex;
+    activeModifier = null;
+    updateModifierButtons();
+    updateReadout();
+    if (originIndex === baseIndex) {
+      hideArrow();
+      hideShadow();
+      setLabelValue(baseIndex);
+      return;
+    }
+    animateThumbToIndex(baseIndex, originIndex, null);
+  };
+
+  const clearModifierForDrag = () => {
+    if (activeModifier === null) {
+      return;
+    }
+    activeModifier = null;
+    baseIndex = currentIndex;
+    setLabelValue(currentIndex);
+    hideArrow();
+    hideShadow();
+    updateReadout();
+    updateModifierButtons();
+  };
+
+  const handleModifierToggle = (delta: number) => {
+    if (activeModifier === delta) {
+      deactivateModifier();
+      return;
+    }
+    activateModifier(delta);
   };
 
   MODIFIERS.forEach((delta) => {
@@ -447,14 +623,20 @@ export const mountUrlTwo = () => {
     button.type = "button";
     button.className = "modifiers__button";
     button.dataset.delta = String(delta);
-    button.textContent = delta > 0 ? `+${delta}` : String(delta);
+    button.setAttribute("aria-pressed", "false");
+    button.textContent = formatDelta(delta);
+
     button.addEventListener("click", () => {
       if (animating) {
         return;
       }
-      applyModifier(delta);
+      handleModifierToggle(delta);
     });
-    modifierButtons.push(button);
+
+    modifierButtons.push({
+      button,
+      delta,
+    });
     modifiersList.appendChild(button);
   });
 
@@ -485,18 +667,20 @@ export const mountUrlTwo = () => {
       thumb.releasePointerCapture(event.pointerId);
     }
     snapToNearest();
-    mergeButton.disabled = selectedModifier === null;
   };
 
   thumb.addEventListener("pointerdown", (event) => {
     if (animating) {
       return;
     }
+    if (activeModifier !== null) {
+      clearModifierForDrag();
+    }
     event.preventDefault();
     thumb.setPointerCapture(event.pointerId);
     dragging = true;
     thumb.classList.add("slider__thumb--no-transition");
-    toggleLabel(false, currentIndex);
+    setLabelValue(currentIndex);
     hideArrow();
     hideShadow();
     requestMeasurements();
