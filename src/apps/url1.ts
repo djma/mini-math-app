@@ -32,9 +32,6 @@ const injectStyles = () => {
       background: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 100%);
       min-height: 100vh;
       min-width: 100vw;
-      overflow: hidden;
-      touch-action: none;
-      overscroll-behavior: none;
       -webkit-touch-callout: none;
       user-select: none;
     }

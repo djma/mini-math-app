@@ -6,6 +6,18 @@ export const disableContextMenuAndZoom = () => {
   }
   interactionsDisabled = true;
 
+  const clampScrolling = (element: HTMLElement | null) => {
+    if (!element) {
+      return;
+    }
+    element.style.overflow = "hidden";
+    element.style.overscrollBehavior = "none";
+    element.style.touchAction = "none";
+  };
+
+  clampScrolling(document.documentElement);
+  clampScrolling(document.body);
+
   // Prevent browser UI gestures so dragging stays consistent across devices.
   const preventDefault = (event: Event) => {
     event.preventDefault();
