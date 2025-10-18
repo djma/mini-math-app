@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "bun run dev.ts",
     "build": "bun build --target=browser --outfile=public/sketch.js src/main.ts",
-    "check": "bunx --bun tsc --noEmit --pretty"
+    "check": "node ./node_modules/typescript/bin/tsc --noEmit --pretty"
   },
   "devDependencies": {
     "@types/bun": "^1.2.23",
