@@ -71,6 +71,12 @@ const start = async () => {
         app.mountUrlFour();
       }
     },
+    "/5": async () => {
+      const app = await import("./apps/url5");
+      if ("mountUrlFive" in app && typeof app.mountUrlFive === "function") {
+        app.mountUrlFive();
+      }
+    },
   };
 
   const handler = routes[normalizedPath];
