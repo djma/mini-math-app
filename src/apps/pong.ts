@@ -6,7 +6,7 @@ const PADDLE_WIDTH = 16;
 const PADDLE_X_OFFSET = 32;
 const BALL_RADIUS = 12;
 const BASE_BALL_SPEED = 420; // px per second
-const SPEED_AFTER_PADDLE_HIT = 1.01; // light boost so volleys accelerate
+const SPEED_AFTER_PADDLE_HIT = 1.02; // light boost so volleys accelerate
 
 type Side = "left" | "right";
 
@@ -109,7 +109,7 @@ const injectStyles = () => {
       font-weight: 800;
       letter-spacing: 0.08em;
       color: #0f172a;
-      font-size: clamp(32px, 4vw, 48px);
+      font-size: clamp(64px, 8vw, 96px);
       text-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
       min-width: 2ch;
       text-align: center;
@@ -403,7 +403,9 @@ export const mountPong = () => {
     const speed =
       Math.hypot(state.ball.vx, state.ball.vy) * SPEED_AFTER_PADDLE_HIT;
     const angleAdjust = offset * 0.6; // tilt the reflection
-    const newAngle = (side === "left" ? 0 : Math.PI) + angleAdjust;
+    const baseAngle = side === "left" ? 0 : Math.PI;
+    const signedAdjust = side === "left" ? angleAdjust : -angleAdjust;
+    const newAngle = baseAngle + signedAdjust;
 
     state.ball.vx = Math.cos(newAngle) * speed;
     state.ball.vy = Math.sin(newAngle) * speed;
