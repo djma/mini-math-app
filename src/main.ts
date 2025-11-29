@@ -77,6 +77,12 @@ const start = async () => {
         app.mountUrlFive();
       }
     },
+    "/pong": async () => {
+      const app = await import("./apps/pong");
+      if ("mountPong" in app && typeof app.mountPong === "function") {
+        app.mountPong();
+      }
+    },
   };
 
   const handler = routes[normalizedPath];
